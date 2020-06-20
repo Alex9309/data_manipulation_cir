@@ -13,4 +13,4 @@
 ## Необходимые программы
 
 1. [Скачать R](https://cran.r-project.org/bin/windows/base/)
-2. 
+2. [Скачать R Studio](https://rstudio.com/products/rstudio/download/#download)
