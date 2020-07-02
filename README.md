@@ -16,7 +16,7 @@
 
 ## Полезные источники
 
-### Печатные материалы
+### Печатные материалы (обязательные для работы)
 1. [Шпаргалки по R и различным его пакетам](https://rstudio.com/resources/cheatsheets/)
 2. [R for Data Science](https://r4ds.had.co.nz/)
 3. [R Markdown](https://bookdown.org/yihui/rmarkdown/)
@@ -25,3 +25,5 @@
 1. [Основы программирования в R](https://stepik.org/course/497/promo)
 2. [Анализ данных в R на stepik](https://stepik.org/course/129/promo)
 3. [R programming](https://www.coursera.org/learn/r-programming)
+
+### 
