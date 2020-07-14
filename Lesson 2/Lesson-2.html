@@ -1660,29 +1660,10 @@ summary {
 <h1>Работа с SPSS данными в RSudio</h1>
 <p>Данные из SPSS, Stata или SAS загружаются в RStudio помощью пакета haven <a href="https://cran.r-project.org/web/packages/haven/index.html">см.описание</a>, который относится к tidyverse. Поэтому нам не нужно его устанавливать, однако его необходимо “включить” с помощью команды library.</p>
 <pre class="r"><code>#install.packages(&#39;tidyverse&#39;)
-library(tidyverse)</code></pre>
-<pre><code>## Warning: package &#39;tidyverse&#39; was built under R version 3.6.3</code></pre>
-<pre><code>## -- Attaching packages ------------ tidyverse 1.3.0 --</code></pre>
-<pre><code>## v ggplot2 3.3.0     v purrr   0.3.4
-## v tibble  3.0.1     v dplyr   1.0.0
-## v tidyr   1.0.2     v stringr 1.4.0
-## v readr   1.3.1     v forcats 0.5.0</code></pre>
-<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 3.6.3</code></pre>
-<pre><code>## Warning: package &#39;tibble&#39; was built under R version 3.6.3</code></pre>
-<pre><code>## Warning: package &#39;tidyr&#39; was built under R version 3.6.3</code></pre>
-<pre><code>## Warning: package &#39;readr&#39; was built under R version 3.6.3</code></pre>
-<pre><code>## Warning: package &#39;purrr&#39; was built under R version 3.6.3</code></pre>
-<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 3.6.3</code></pre>
-<pre><code>## Warning: package &#39;stringr&#39; was built under R version 3.6.3</code></pre>
-<pre><code>## Warning: package &#39;forcats&#39; was built under R version 3.6.3</code></pre>
-<pre><code>## -- Conflicts --------------- tidyverse_conflicts() --
-## x dplyr::filter() masks stats::filter()
-## x dplyr::lag()    masks stats::lag()</code></pre>
-<pre class="r"><code>library(haven)</code></pre>
-<pre><code>## Warning: package &#39;haven&#39; was built under R version 3.6.3</code></pre>
+library(tidyverse)
+library(haven)</code></pre>
 <p>Основная команда из этого пакета, с которой мы работаем - это read_sav. Посмотрите на ее справку.</p>
 <pre class="r"><code>?read_sav</code></pre>
-<pre><code>## starting httpd help server ... done</code></pre>
 <p>Особенно обратите внимание на аргумент “user_na”. Что произойдет, если этот аргумент равен FALSE и что произойдет, если этот аргумент будет равен TRUE?</p>
 <p>Давайте загрузим данные в переменную data с помощью команды read_sav.</p>
 <pre class="r"><code>data &lt;- read_sav(&#39;Data/МСЖ_19_финальная.sav&#39;)</code></pre>
@@ -1724,17 +1705,16 @@ head(data)</code></pre>
 </div>
 <div id="dplyr-как-грамматика-манипулирования-данными" class="section level1">
 <h1>Dplyr как грамматика манипулирования данными</h1>
-<p>Мы начнем работать с пятью ключевыми глаголами dplyr:</p>
+<p>Мы начнем работать тремя глаголами dplyr:</p>
 <ol style="list-style-type: decimal">
 <li>filter() - отбор наблюдений</li>
 <li>select() - отбор переменных</li>
-<li>arrange() - сортировка наблюдений</li>
-<li>mutate() - создание новых переменных или их трансформация</li>
 <li>summarize() - сжатие наблюдений до какой-либо сводки (напр., среднего, стандартного отклонения и так далее)</li>
 </ol>
+<p>Также мы посмотрим на то, что можно делать с этими глаголами, при применении group_by - группирующей команде.</p>
 <div id="небольшая-вставка-два-способа-работы-нескольких-функций-подряд---изнутри-кнаружи-и-слева-направо." class="section level3">
 <h3>Небольшая вставка: два способа работы нескольких функций подряд - изнутри-кнаружи и слева-направо.</h3>
-<p>До этого мы с вами работали с одним способом - изнутри-кнаружи. Например,</p>
+<p>До этого мы с вами работали с одним способом написания функций - изнутри-кнаружи. Например,</p>
 <pre class="r"><code>View(look_for(data, details = T))</code></pre>
 <p>работает следующим образом. Сначала исполняется команда look_for(), а затем ее результат передается в команду View(). Другой способ появляется вместе c tidyverse. Выглядит он следующим образом:</p>
 <pre class="r"><code>look_for(data, details = T) %&gt;% 
@@ -1746,8 +1726,8 @@ head(data)</code></pre>
 <li>Выполни команду View() над тем, что было передано раньше</li>
 </ol>
 </div>
-<div id="фильтры" class="section level2">
-<h2><a href="https://dplyr.tidyverse.org/reference/filter.html">Фильтры</a></h2>
+<div id="фильтр-filter" class="section level2">
+<h2><a href="https://dplyr.tidyverse.org/reference/filter.html">Фильтр, filter</a></h2>
 <div id="один-фильтр" class="section level3">
 <h3>Один фильтр</h3>
 <p>Давайте научимся извлекать разные группы студентов для работы. Например, попробуем извлечь из базы только первокурсников бакалавриата. Чтобы это сделать нам нужно найти переменную, в которой записан курс обучения. Мы можем это сделать с помощью уже упоминаемой функции look_for().</p>
@@ -1762,51 +1742,170 @@ head(data)</code></pre>
 <p>Давайте сохраним результат и посмотрим, в чем его отличие от изначальной базы.</p>
 <pre class="r"><code>data_1st_course &lt;- data %&gt;% 
   filter(VV1 == 1)</code></pre>
-<p><strong>Логические выражения для фильтров:</strong></p>
+<p><strong>Некоторые полезные команды для работы с фильтрами:</strong></p>
 <ol style="list-style-type: decimal">
 <li>==, &gt;, &lt;, &gt;=, &lt;=, != (не равно)</li>
-<li>%in% - используем, если хотим перечислить несколько случаев. Напр. так можно получить первый, третий курс бакалавриата и первый курс магистратуры</li>
+<li>НАЗВАНИЕ_ПЕРЕМЕННОЙ %in% ВЕКТОР_ЗНАЧЕНИЙ - используем, если хотим перечислить несколько случаев. Напр. так можно получить первый, третий курс бакалавриата и первый курс магистратуры</li>
 </ol>
 <pre class="r"><code>data %&gt;% 
   filter(VV1 %in% c(1, 3, 8))</code></pre>
 <ol start="3" style="list-style-type: decimal">
-<li></li>
+<li>!is.na(НАЗВАНИЕ_ПЕРЕМЕННОЙ) - используем, если хотим убрать пропущенные значения.</li>
 </ol>
-<p>Для этого нам нужно найти переменную, в которой сохранена инфор</p>
-</div>
-<div id="section" class="section level3">
-<h3></h3>
 <pre class="r"><code>data %&gt;% 
-  nrow()
+  filter(!is.na(VV1))</code></pre>
+</div>
+<div id="несколько-фильтров" class="section level3">
+<h3>Несколько фильтров</h3>
+<p>Дополнить фильтры можно просто через запятую. Например, давайте выберем студентов первого курса бакалавриата, которые не относятся к иностранцам. Это делается следующим образом:</p>
+<pre class="r"><code>data %&gt;% 
+  filter(VV1 == 1, VV0==0)</code></pre>
+</div>
+</div>
+<div id="выбор-переменной-select" class="section level2">
+<h2><a href="https://dplyr.tidyverse.org/reference/select.html">Выбор переменной, select</a></h2>
+<div id="выбор-одной-или-нескольких-переменных-с-помощью-перечисления-их-названий" class="section level3">
+<h3>Выбор одной или нескольких переменных с помощью перечисления их названий</h3>
+<p>Переменные можно выбрать просто написав их название в функции select(). Если нужно выбрать несколько переменных, то их можно написать через запятую.</p>
+<pre class="r"><code>data %&gt;% 
+  select(VV1, VV0, USL1s2_r1, USL1s2_r2, USL1s2_r3, USL1s2_r4, SERV1_1, SERV1_2, SERV1_3)</code></pre>
+</div>
+<div id="использование-одного-помощника-helper-для-выбора-переменных" class="section level3">
+<h3>Использование одного помощника, helper для выбора переменных</h3>
+<p>Переменные можно выбирать и с помощью следующих функций внутри select():</p>
+<ol style="list-style-type: decimal">
+<li>starts_with(“ТЕКСТ_С_КОТОРОГО_НАЧИНАЮТСЯ_ПЕРЕМЕННЫЕ”) - с помощью этой функции можно указать начало текста, по которому нужно найти интересующие нас переменные.</li>
+</ol>
+<pre class="r"><code>data %&gt;% 
+  select(starts_with(&quot;VV&quot;))</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>ends_with(“ТЕКСТ_КОТОРЫМ_ЗАКАНЧИВАЮТСЯ_НУЖНЫЕ_ПЕРЕМЕННЫЕ”) - с помощью этой функции можно указать конец текста, по которому нужно найти интересующие нас переменные.</li>
+</ol>
+<pre class="r"><code>data %&gt;% 
+  select(ends_with(&quot;_r1&quot;))</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>contains(“ТЕКСТ_КОТОРЫЙ_СОДЕРЖИТСЯ_В_НАЗВАНИИ_НУЖНЫХ_ПЕРЕМЕННЫХ”) - с помощью этой функции можно указать текст, по которому нужно найти интересующие нас переменные.</li>
+</ol>
+<pre class="r"><code>data %&gt;% 
+  select(contains(&quot;SERV&quot;))</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li>num_range(“ТЕКСТ_КОТОРЫЙ_СОДЕРЖИТСЯ_В_НАЗВАНИИ_ПЕРЕМЕННОЙ”, ВЕКТОР_С_ЦИФРАМИ) - с помощью этой функции можно указать текст и цифры, по которым нужно найти интересующие нас переменные (напр., VV0, VV1 или SERV1_1, SERV1_2.</li>
+</ol>
+<pre class="r"><code>data %&gt;% 
+  select(num_range(&quot;USL1s2_r&quot;, 1:3))</code></pre>
+</div>
+<div id="использование-нескольких-помощников-helper-для-выбора-переменных" class="section level3">
+<h3>Использование нескольких помощников, helper для выбора переменных</h3>
+<p>Можно использовать несколько помощников одновременно для выбора переменных. Обратите внимание, что тогда выберутся все перечисленные переменные.</p>
+<pre class="r"><code>data %&gt;% 
+  select(starts_with(&quot;VV&quot;), contains(&quot;SERV&quot;), num_range(&quot;USL1s2_r&quot;, 1:4))</code></pre>
+<p>Если же вы хотите использовать несколько помощников для того, чтобы выбрать определенную группу переменных, то необходимо использовать логические операторы. Напр., вас интересуют переменные, которые начинаются на “SERV” И заканчиваются на “1”. Для этого вы можете использовать логический оператор “&amp;” (И).</p>
+<pre class="r"><code>data %&gt;% 
+  select(starts_with(&quot;SERV&quot;) &amp; ends_with(&quot;1&quot;))</code></pre>
+<p>О каких еще логических операторах нужно знать:</p>
+<ol style="list-style-type: decimal">
+<li>&amp; (И)</li>
+<li><div class="line-block">(ИЛИ)</div></li>
+<li>! (НЕ)</li>
+</ol>
+</div>
+</div>
+<div id="сводка-по-переменным-summarize-или-summarise" class="section level2">
+<h2><a href="https://dplyr.tidyverse.org/reference/summarise.html">Сводка по переменным, summarize или summarise</a></h2>
+<p>Чтобы получить ту или иную сводку по нашим наблюдениям, необходимо использовать summarize(). В summarize есть множество функций, которые позволяют получить сводки. Приведу некоторые из них:</p>
+<ol style="list-style-type: decimal">
+<li>Меры центральной тенденции: mean() - среднее, median() - медиана</li>
+<li>Меры вариативности: sd() - станд.отклон., IQR() - межквартильный размах, mad() - отклонение от медианы</li>
+<li>Меры размаха: min() - минимальное значение, max() - максимальное, quantile() - процентили</li>
+<li>Количества: n() - количество наблюдений, n_distinct() - количество уникальных наблюдений</li>
+</ol>
+<p>Давайте начнем с простого примера. Попробуем получить количество человек в данных</p>
+<pre class="r"><code>data %&gt;% 
+  summarize(n())</code></pre>
+<p>Теперь попробуем получить средние, стандартные отклонения и количество человек по переменной USL1s2_r1 - “Оценка сопровождения обр. процесса - Условия для аудиторного обучения”</p>
+<pre class="r"><code>data %&gt;% 
+  summarize(
+    mean = mean(USL1s2_r1), 
+    sd = sd(USL1s2_r1),
+    n = n()
+  )</code></pre>
+<p>Что случилось? Дело в том, что в этой переменной есть пропущенные значения. Если R видит пропущенные значения, то тогда он не выдает оценку. Что можно с этим сделать? Посмотрите на справку по функции mean()</p>
+<pre class="r"><code>?mean()</code></pre>
+<p>Применим полученные знания из этой справки.</p>
+<pre class="r"><code>data %&gt;% 
+  summarize(
+    mean = mean(USL1s2_r1, na.rm = T), 
+    sd = sd(USL1s2_r1, na.rm = T),
+    n = n()
+  )</code></pre>
+<p>Кхм, произошло что-то подозрительное. Откуда такое большое стандартное отклонение? Давайте посмотрим на эту переменную с помощью look_for() или через val_labels().</p>
+<pre class="r"><code>val_labels(data$USL1s2_r1)</code></pre>
+<p>Мы видим, что помимо 1-5, также есть и 99. Судя по всему в нашей базе эта переменная не была закодирована как пропущенная. Давайте отфильтруем базу, убрав наблюдения, в которых эта переменная принимает значение “99”.</p>
+<pre class="r"><code>data %&gt;% 
+  filter(USL1s2_r1 != 99) %&gt;% 
+  summarize(
+    mean = mean(USL1s2_r1, na.rm = T), 
+    sd = sd(USL1s2_r1, na.rm = T),
+    n = n()
+  )</code></pre>
+<p>Теперь получилось гораздо лучше! Обратите внимание, как мы использовали несколько выражений подряд. Сначала мы сказали, что есть база под название data. Затем мы попросили эту базу отфильтровать, а потом по этой отфильтрованной базе мы попросили сделать сводку. В этом одна из самых сильных сторон Dplyr - возможность объединять несколько команд в одну выражение.</p>
+</div>
+<div id="вспомогательный-глагол-сгруппировать-по-groupby" class="section level2">
+<h2><a href="https://dplyr.tidyverse.org/reference/group_by.html">+ Вспомогательный глагол “Сгруппировать по”, groupby()</a></h2>
+<p>Если бы мы хотели теперь получить оценку по USL1s2_r1 - “Оценка сопровождения обр. процесса - Условия для аудиторного обучения” по каждому курсу обучения, то мы могли бы последовательно применить несколько фильтров.</p>
+<pre class="r"><code>data %&gt;% 
+  filter(VV1 == 1) %&gt;% 
+  summarize(
+    mean = mean(USL1s2_r1, na.rm = T), 
+    sd = sd(USL1s2_r1, na.rm = T),
+    n = n()
+  )
 
 data %&gt;% 
-  filter(VV1 == 1) %&gt;% # в фильтрах всегда необходимо использовать логические операции
-  nrow()</code></pre>
-</div>
-<div id="отбор-переменных" class="section level3">
-<h3>Отбор переменных</h3>
+  filter(VV1 == 2) %&gt;% 
+  summarize(
+    mean = mean(USL1s2_r1, na.rm = T), 
+    sd = sd(USL1s2_r1, na.rm = T),
+    n = n()
+  )</code></pre>
+<p>И так далее.</p>
+<p>Однако есть куда более удобная команда - group_by(), которая позволяет сделать базу данных сгруппированной. Это означает, что все операции, которые вы будете делать после применения группирования, будут применяться не на всю базу, а на каждую из групп. У этой функции есть много клевых применений, но пока мы остановимся только на одном - на использовании команды group_by() вместе со сводками.</p>
+<div id="использования-одного-группирования" class="section level3">
+<h3>Использования одного группирования</h3>
 <pre class="r"><code>data %&gt;% 
-  ncol()
-
-data %&gt;% 
-  filter(VV1 == 1) %&gt;% 
-  select(VV0, USL1s2_r1, USL1s2_r2, USL1s2_r3, USL1s2_r4, SERV1_1, SERV1_2, SERV1_3) %&gt;% # Здесь можно перечислять, а также использовать наречия (см.ниже)
-  ncol()</code></pre>
+  filter(USL1s2_r1 != 99) %&gt;% 
+  group_by(VV1) %&gt;% 
+  summarize(
+    mean = mean(USL1s2_r1, na.rm = T), 
+    sd = sd(USL1s2_r1, na.rm = T),
+    n = n()
+  )</code></pre>
+<p>Обратите внимание на то, что мы в нескольких колонках получили стандартное отклонение равное NA. Почему так?</p>
 </div>
-<div id="создание-переменных-или-их-трансформация" class="section level3">
-<h3>Создание переменных или их трансформация</h3>
+<div id="использование-нескольких-групп" class="section level3">
+<h3>Использование нескольких групп</h3>
+<p>Если вы хотите получить более гранулированные группы, то вы можете их дальше перечислять в команде group_by()</p>
 <pre class="r"><code>data %&gt;% 
-  filter(VV1 == 1) %&gt;% 
-  select(VV0, USL1s2_r1, USL1s2_r2, USL1s2_r3, USL1s2_r4, SERV1_1, SERV1_2, SERV1_3) %&gt;% 
-  ncol()
-
-data %&gt;% 
-  filter(VV1 == 1) %&gt;% 
-  select(VV0, USL1s2_r1, USL1s2_r2, USL1s2_r3, USL1s2_r4, SERV1_1, SERV1_2, SERV1_3) %&gt;% 
-  mutate(
-    USL1s2_all = USL1s2_r1 + USL1s2_r2 + USL1s2_r3 + USL1s2_r4
+  filter(USL1s2_r1 != 99) %&gt;% 
+  group_by(VV1, VV0) %&gt;% 
+  summarize(
+    mean = mean(USL1s2_r1, na.rm = T), 
+    sd = sd(USL1s2_r1, na.rm = T),
+    n = n()
+  )</code></pre>
+</div>
+<div id="разгруппировка" class="section level3">
+<h3>Разгруппировка</h3>
+<p>Если с полученными результатами вы захотите что-то делать не на уровне групп, а на уровне базы, то тогда вам следует применить команду ungroup().</p>
+<pre class="r"><code>data %&gt;% 
+  filter(USL1s2_r1 != 99) %&gt;% 
+  group_by(VV1, VV0) %&gt;% 
+  summarize(
+    mean = mean(USL1s2_r1, na.rm = T), 
+    sd = sd(USL1s2_r1, na.rm = T),
+    n = n()
   ) %&gt;% 
-  ncol()</code></pre>
+  ungroup()</code></pre>
 </div>
 </div>
 </div>
