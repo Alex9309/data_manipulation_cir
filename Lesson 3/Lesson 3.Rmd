@@ -1,0 +1,315 @@
+---
+title: "Занятие 3"
+output:
+  html_document:
+    css: style.css
+    df_print: paged
+---
+
+# Dplyr как грамматика манипулирования данными
+
+Для начала давайте загрузим библиотеки и загрузим данные, если они у вас не загружены
+```{r, eval=F}
+
+# Packages
+
+library(tidyverse)
+library(labelled)
+library(haven)
+
+# Data
+
+data <- read_sav('Data/МСЖ_19_финальная.sav')
+
+```
+
+## [Специальный отбор наблюдений, slice](https://dplyr.tidyverse.org/reference/slice.html)
+
+Этот глагол позволяет выбирать, убирать или делать дубликаты строк посредством их порядкового номера.
+
+```{r, eval=F}
+data %>% 
+  slice(1:3)
+```
+
+Слайс имеет несколько вспомогательных функций:
+
+  1. slice_head() и slice_tail() - отобрать первые / последние несколько наблюдений
+  2. slice_sample() - сделать выборку из наблюдений. СУПЕР ПОЛЕЗНАЯ ФУНКЦИЯ, если вы хотите сделать из ГС форму выборки
+  3. slice_min() и slice_max() - отобрать максимальные, минимальные наблюдения по какой-либо из переменных
+  
+```{r, eval=F}
+data %>% 
+  slice_head(n = 5)
+```
+
+Посмотрите, пожалуйста, описание slice_sample и попробуйте из него рассказать, как работает эта функция
+
+## [Сортировка, arrange](https://dplyr.tidyverse.org/reference/arrange.html)
+
+Этот глагол позволяет упорядочивать данные по значениям выбранных столбцов.
+ОБРАТИТЕ ВНИМАНИЕ! В отличие от другие глаголов dplyr, arrange игнорирует параметр группирования. Для того, чтобы получить сортировку по группам, необходимо использовать параметр .by_group = TRUE.
+
+Чтобы получить сортировку по убыванию необходимо использовать функцию desc().
+
+```{r, eval=F}
+data %>% 
+  arrange(USL1s2_r1) %>% 
+  select(USL1s2_r1)
+
+data %>% 
+  arrange(desc(USL1s2_r1)) %>% 
+  select(USL1s2_r1)
+```
+
+## [Создание новых переменных, mutate](https://dplyr.tidyverse.org/reference/mutate.html)
+
+Этот глагол добавляет новые переменные.
+Есть множество операций, которые можно делать внутри mutate:
+
+  1. Математические операции: +, -, log() и т.д.
+  2. [Ранжирование](https://dplyr.tidyverse.org/reference/ranking.html): dense_rank(), min_rank и т.д.
+  3. Получение куммулятивных значений: cumsum(), cummean(), cummin() и т.д.
+  4. na_if() - перекодировать в пропущенное значение
+  5. if_else() - задать условие для перекодирования, если, то
+  6. case_when() - задать несколько условий для перекодирований
+  
+Попробуем сделать комбинированную переменную по оценке сопровождения образовательного процесса и посмотреть на ее средние и стандартные отклонения.
+
+```{r, eval=F}
+data %>% 
+  mutate(
+    USL1s2_all = USL1s2_r1 + USL1s2_r2 + USL1s2_r3 + USL1s2_r4
+  ) %>% 
+  summarize(
+    mean = mean(USL1s2_all, na.rm = T),
+    sd = sd(USL1s2_all, na.rm = T)
+  )
+```
+Числа слишком большие. Это связано с тем, что 99 не закодировано как пропущенное значение. Давайте попробуем его закодировать этим образом с помощью na_if(). Посмотрите, как работает na_if.
+
+```{r, eval=F}
+data %>% 
+  mutate(
+    USL1s2_r1 = na_if(USL1s2_r1, 99),
+    USL1s2_r2 = na_if(USL1s2_r2, 99),
+    USL1s2_r3 = na_if(USL1s2_r3, 99),
+    USL1s2_r4 = na_if(USL1s2_r4, 99),
+    USL1s2_all = USL1s2_r1 + USL1s2_r2 + USL1s2_r3 + USL1s2_r4
+  ) %>% 
+  summarize(
+    mean = mean(USL1s2_all, na.rm = T),
+    sd = sd(USL1s2_all, na.rm = T)
+    )
+```
+
+Обратите внимание, что пока вы не сохраните результаты, эти новые переменные также не сохранятся нигде.
+
+А теперь давайте попробуем укрупнить шкалу, сделав пятибалку дихотомической шкалой с помощью case_when(). Эта функция работает примерно следующим образом:
+
+```{r, eval=F}
+data %>% 
+  mutate(
+    НОВАЯ_ПЕРЕМЕННАЯ = case_when(
+      СТАРАЯ_ПЕРЕМЕННАЯ, ЛОГИЧЕСКАЯ ОПЕРАЦИЯ (равна, не равна) ~ ЗНАЧЕНИЕ_НОВОЙ_ПЕРЕМЕННОЙ,
+      СТАРАЯ_ПЕРЕМЕННАЯ, ЛОГИЧЕСКАЯ ОПЕРАЦИЯ (равна, не равна) ~ ЗНАЧЕНИЕ_НОВОЙ_ПЕРЕМЕННОЙ,
+      СТАРАЯ_ПЕРЕМЕННАЯ, ЛОГИЧЕСКАЯ ОПЕРАЦИЯ (равна, не равна) ~ ЗНАЧЕНИЕ_НОВОЙ_ПЕРЕМЕННОЙ
+      TRUE (ОЗНАЧАЕТ - при всех прочих значениях) ~ ЗНАЧЕНИЕ_НОВОЙ_ПЕРЕМЕННОЙ
+    )
+  )
+```
+Обратите внимание на то, как я задам пропущенные значения. Когда вы будете делать case_when, вам нужно будет создавать пропущенное значение именно с его типом. Можно использовать NA_logical_, NA_integer_, NA_character_ или NA_real_ в зависимости от типа.
+
+```{r, eval=F}
+data %>% 
+  mutate(
+    USL1s2_r1_new = case_when(
+      USL1s2_r1 %in% c(4, 5) ~ 1L,
+      USL1s2_r1 %in% c(1:3) ~ 0L,
+      TRUE ~ NA_integer_ 
+    ),
+    USL1s2_r2_new = case_when(
+      USL1s2_r2 %in% c(4, 5) ~ 1L,
+      USL1s2_r2 %in% c(1:3) ~ 0L,
+      TRUE ~ NA_integer_
+    ),
+    USL1s2_r3_new = case_when(
+      USL1s2_r3 %in% c(4, 5) ~ 1L,
+      USL1s2_r3 %in% c(1:3) ~ 0L,
+      TRUE ~ NA_integer_
+    ),
+    USL1s2_r4_new = case_when(
+      USL1s2_r4 %in% c(4, 5) ~ 1L,
+      USL1s2_r4 %in% c(1:3) ~ 0L,
+      TRUE ~ NA_integer_
+    ),
+    USL1s2_all = USL1s2_r1_new + USL1s2_r2_new + USL1s2_r3_new + USL1s2_r4_new
+  ) %>% 
+  summarize(
+    mean = mean(USL1s2_all, na.rm = T),
+    sd = sd(USL1s2_all, na.rm = T)
+  )
+```
+
+## [Операции над множеством переменных, across](https://dplyr.tidyverse.org/reference/across.html)
+
+На предыдущем и на этом занятии мы с вами уже повторяли несколько раз одну и ту же команду для того, чтобы трансформировать несколько переменных или получить по ним сводки. Давайте посмотрим, как можно это делать с помощью функции across. 
+
+across() позволяет легко применять одни и те трансформации на множестве столбцов, используя семантику select() внутри глаголов summarize() и mutate(). 
+
+Чтобы использовать across, в нем нам нужно уточнить два параметра:
+
+  1. Какие выбрать колонки, .cols,
+  2. Какие использовать функции, .fns
+  
+Функции можно передавать тремя способами:
+
+  1. Просто написать ее название, mean - без скобок.
+  2. Использовать purr стилистику (может, сделаем курс потом по этой теме) ~ mean(.x, na.rm = TRUE). Общая формула такая: ~ НАЗВАНИЕ_ФУНКЦИИ(.АРГУМЕНТ_1, .АРГУМЕНТ_2, ДОПОЛНИТЕЛЬНЫЕ АРГУМЕНТЫ).
+  3. Использовать список, чтобы передать несколько функций: list(mean = mean, n_miss = ~ sum(is.na(.x))
+
+Давайте посмотрим, как это работает.
+
+```{r, eval=F}
+data %>% 
+  summarize(
+    across(starts_with("USL1s2_r"), mean, na.rm = T)
+  )
+
+data %>% 
+  summarize(
+    across(starts_with("USL1s2_r"), ~ mean(.x, na.rm = T))
+  )
+
+data %>% 
+  summarize(
+    across(starts_with("USL1s2_r"), list(~ mean(.x, na.rm = T)))
+  )
+```
+
+Если бы мы хотели средние и стандартные отклонения, то нужно было бы делать это следующим образом:
+
+```{r, eval=F}
+data %>% 
+  summarize(
+    across(starts_with("USL1s2_r"), list(
+      ~ mean(.x, na.rm = T),
+      ~ sd(.x, na.rm = T)))
+  )
+```
+
+Теперь воспользуемся across для того, чтобы сделать и средние и стандартные отклонения по этой переменной, при этом трансформировав 99 в пропущенные значения.
+
+```{r, eval=F}
+data %>% 
+  mutate(
+    across(starts_with("USL1s2_r"), ~na_if(.x, 99))
+  ) %>% 
+  summarize(
+    across(starts_with("USL1s2_r"), list(
+      ~ mean(.x, na.rm = T),
+      ~ sd(.x, na.rm = T)))
+  )
+```
+
+А теперь разберем, как можно было бы использовать case_when вместе с across().
+
+```{r, eval=F}
+data %>% 
+  mutate(
+    across(starts_with("USL1s2_r"), ~case_when(
+      .x %in% c(4, 5) ~ 1L,
+      .x %in% c(1:3) ~ 0L,
+      TRUE ~ NA_integer_
+    ))
+  ) %>% 
+  summarize(
+    across(starts_with("USL1s2_r"), list(
+      ~ mean(.x, na.rm = T),
+      ~ sd(.x, na.rm = T)))
+  )
+```
+
+## [Работа с двумя таблицами](https://dplyr.tidyverse.org/articles/two-table.html)
+
+### Добавление новых переменных
+
+  1. left_join() - добавить к первой таблице вторую, сохранив все наблюдения из первой
+  2. right_join() - добавить к первой таблице вторую, сохранив все наблюдения из второй
+  3. inner_join() - добавить к первой таблице вторую, сохранив все наблюдения, которые есть И в первой, И во второй (пересекаются)
+  4. full_join() - добавить к первой таблице вторую, сохранив все наблюдения, которые есть ИЛИ в первой, ИЛИ во второй (пересекаются)
+  
+В основе соединение происходит автоматически, если названия общих переменных одинаковы.
+
+```{r, eval=F}
+data %>% 
+  mutate(
+    USL1s2_r1 = na_if(USL1s2_r1, 99),
+    USL1s2_r2 = na_if(USL1s2_r2, 99),
+    USL1s2_r3 = na_if(USL1s2_r3, 99),
+    USL1s2_r4 = na_if(USL1s2_r4, 99),
+    USL1s2_all = USL1s2_r1 + USL1s2_r2 + USL1s2_r3 + USL1s2_r4
+  ) %>% 
+  select(
+    id, CommonStudent, USL1s2_all
+  ) -> data_with_summed_USL1s2
+
+
+data %>% 
+  left_join(
+    data_with_summed_USL1s2
+  )
+```
+
+Если же названия различаются, то необходимо использовать аргумент by.
+```{r, eval=F}
+ПЕРВАЯ_ТАБЛИЦА %>% 
+  left_join(ВТОРАЯ_ТАБЛИЦА, by = c("НАЗВАНИЕ_ПЕРЕМЕННОЙ_В_ПЕРВОЙ_ТАБЛИЦЕ_В_КАВЫЧКАХ" = "НАЗВАНИЕ_ПЕРЕМЕННОЙ_ВО_ВТОРОЙ_ТАБЛИЦЕ_В_КАВЫЧКАХ"))
+```
+
+```{r, eval=F}
+data %>% 
+  mutate(
+    USL1s2_r1 = na_if(USL1s2_r1, 99),
+    USL1s2_r2 = na_if(USL1s2_r2, 99),
+    USL1s2_r3 = na_if(USL1s2_r3, 99),
+    USL1s2_r4 = na_if(USL1s2_r4, 99),
+    USL1s2_all = USL1s2_r1 + USL1s2_r2 + USL1s2_r3 + USL1s2_r4
+  ) %>% 
+  select(
+    NEW_ID = id, 
+    NEW_COM = CommonStudent,
+    USL1s2_all
+  ) -> data_with_summed_USL1s2_new_names
+
+data %>% 
+  left_join(
+    data_with_summed_USL1s2_new_names,
+    by = c('id' = 'NEW_ID', 'CommonStudent' = 'NEW_COM')
+  )
+  
+```
+
+## [Добавление новых наблюдений с помощью, bind_rows](https://dplyr.tidyverse.org/reference/bind.html)
+
+Достаточно простая функция. Важно, чтобы все колонки присутствовали.
+
+```{r, eval=F}
+data %>% 
+  slice(-(1:5)) %>% 
+  bind_rows(
+    data %>% 
+      slice(1:5)
+  )
+```
+
+# Домашнее задание
+
+## Ознакомиться со следующими главами в книге R for Data Science:
+
+  1. [Arrange](https://r4ds.had.co.nz/transform.html#arrange-rows-with-arrange)
+  2. [Mutate](https://r4ds.had.co.nz/transform.html#add-new-variables-with-mutate)
+
+## Скачать и постоянно использовать [Dplyr cheat sheet](https://github.com/rstudio/cheatsheets/raw/master/data-transformation.pdf)
+
+## Попробуйте написать команду, которая бы сделала веса по данным студентов по курсам, а потом подсоединила бы эти веса к основной базе данных.
